@@ -3,8 +3,8 @@ var TimerActions = require('../actions/TimerActions.js');
 var Timer = React.createClass({
 
     getInitialState: function() {
-        // assigning to this.state
-        return { elapsed: this.props.timer.elapsed, stopped: this.props.timer.stopped, start: new Date() };
+        // assigning to this.state (accounting for theoretical case where we are getting stored timers here)
+        return { elapsed: this.props.timer.elapsed, startingPoint: this.props.timer.elapsed, stopped: this.props.timer.stopped, start: this.props.timer.start };
     },
 
     componentDidMount: function() {
@@ -22,14 +22,22 @@ var Timer = React.createClass({
         if ( this.state.stopped ) {
             return;
         }
-        this.setState({elapsed: this.props.timer.elapsed + (new Date() - this.state.start)});
+        this.setState({elapsed: this.state.startingPoint + (new Date() - this.state.start)});
     },
 
-    _startStop: function () {
-        // don't really need to update the start state if stopping, but to avoid a logic step:
-        this.setState({stopped: !this.state.stopped, start: new Date()});
+    _startStop: function (e) {
+        var _newStart;
+
+        if ( !this.state.stopped ) {
+            _newStart = new Date();
+            this.setState({stopped: !this.state.stopped});
+        } else {
+            _newStart = this.state.start;
+            this.setState({stopped: !this.state.stopped, start: new Date(), startingPoint: this.state.elapsed});
+        }
+
         // update the store
-        TimerActions.toggleStartStop(this.props.timer, this.state.elapsed);
+        TimerActions.toggleStartStop(this.props.timer, this.state.elapsed, _newStart);
     },
 
     render: function() {

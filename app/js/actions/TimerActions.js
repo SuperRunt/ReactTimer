@@ -16,12 +16,13 @@ var TimerActions = {
     });
   },
 
-  toggleStartStop: function(timer, elapsed) {
+  toggleStartStop: function(timer, elapsed, newStart) {
     AppDispatcher.dispatch({
       actionType: this.types.TIMER_TOGGLE_START_STOP,
       id: timer.id,
       stopped: timer.stopped,
-      elapsed: elapsed
+      elapsed: elapsed,
+      newStart: newStart
     });
   },
 

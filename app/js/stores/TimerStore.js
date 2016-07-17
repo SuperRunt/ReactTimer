@@ -13,7 +13,8 @@ function create(start) {
     _timers[id] = {
         id: id,
         stopped: false,
-        elapsed: 0
+        elapsed: 0,
+        start: start
     };
 }
 
@@ -94,7 +95,7 @@ AppDispatcher.register(function(action) {
         break;
 
         case TimerActions.types.TIMER_TOGGLE_START_STOP:
-            update(action.id, {stopped: !action.stopped, elapsed: action.elapsed});
+            update(action.id, {stopped: !action.stopped, elapsed: action.elapsed, start: action.newStart});
             TimerStore.emitChange();
         break;
 

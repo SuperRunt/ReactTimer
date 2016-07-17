@@ -26,12 +26,13 @@ var TimerActions = {
     });
   },
 
-  toggleStartStop: function(timer, elapsed) {
+  toggleStartStop: function(timer, elapsed, newStart) {
     AppDispatcher.dispatch({
       actionType: this.types.TIMER_TOGGLE_START_STOP,
       id: timer.id,
       stopped: timer.stopped,
-      elapsed: elapsed
+      elapsed: elapsed,
+      newStart: newStart
     });
   },
 
@@ -65,8 +66,8 @@ var TimerActions = require('../actions/TimerActions.js');
 var Timer = React.createClass({displayName: "Timer",
 
     getInitialState: function() {
-        // assigning to this.state
-        return { elapsed: this.props.timer.elapsed, stopped: this.props.timer.stopped, start: new Date() };
+        // assigning to this.state (accounting for theoretical case where we are getting stored timers here)
+        return { elapsed: this.props.timer.elapsed, startingPoint: this.props.timer.elapsed, stopped: this.props.timer.stopped, start: this.props.timer.start };
     },
 
     componentDidMount: function() {
@@ -84,14 +85,22 @@ var Timer = React.createClass({displayName: "Timer",
         if ( this.state.stopped ) {
             return;
         }
-        this.setState({elapsed: this.props.timer.elapsed + (new Date() - this.state.start)});
+        this.setState({elapsed: this.state.startingPoint + (new Date() - this.state.start)});
     },
 
-    _startStop: function () {
-        // don't really need to update the start state if stopping, but to avoid a logic step:
-        this.setState({stopped: !this.state.stopped, start: new Date()});
+    _startStop: function (e) {
+        var _newStart;
+
+        if ( !this.state.stopped ) {
+            _newStart = new Date();
+            this.setState({stopped: !this.state.stopped});
+        } else {
+            _newStart = this.state.start;
+            this.setState({stopped: !this.state.stopped, start: new Date(), startingPoint: this.state.elapsed});
+        }
+
         // update the store
-        TimerActions.toggleStartStop(this.props.timer, this.state.elapsed);
+        TimerActions.toggleStartStop(this.props.timer, this.state.elapsed, _newStart);
     },
 
     render: function() {
@@ -191,7 +200,8 @@ function create(start) {
     _timers[id] = {
         id: id,
         stopped: false,
-        elapsed: 0
+        elapsed: 0,
+        start: start
     };
 }
 
@@ -272,7 +282,7 @@ AppDispatcher.register(function(action) {
         break;
 
         case TimerActions.types.TIMER_TOGGLE_START_STOP:
-            update(action.id, {stopped: !action.stopped, elapsed: action.elapsed});
+            update(action.id, {stopped: !action.stopped, elapsed: action.elapsed, start: action.newStart});
             TimerStore.emitChange();
         break;
 
